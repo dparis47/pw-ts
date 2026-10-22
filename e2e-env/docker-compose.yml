@@ -1,0 +1,73 @@
+services:
+  prestashop:
+    container_name: prestashop
+    restart: unless-stopped
+    image: ${DOCKER_IMAGE_PRESTASHOP}
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SSL_REDIRECT=true
+      - INSTALL_MODULES_DIR=/modules/downloads/auto-install
+    volumes:
+      - ./modules:/modules
+      - ./init-scripts:/tmp/init-scripts:ro
+    ports:
+      - ${HOST_PORT_BIND_PRESTASHOP:?See e2e-env/.env.dist}:80
+
+  mysql:
+    container_name: mysql
+    restart: unless-stopped
+    image: mariadb:lts
+    environment:
+      - TZ=Europe/Paris
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=prestashop
+      - MYSQL_PASSWORD=prestashop
+      - MYSQL_ROOT_PASSWORD=prestashop
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=prestashop
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect']
+      timeout: 10s
+      retries: 5
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=prestashop
+      - PMA_PASSWORD=prestashop
+      - MYSQL_ROOT_PASSWORD=prestashop  # see $MYSQL_ROOT_PASSWORD
+    healthcheck:
+      test: ['CMD', 'curl', '-Ss', 'http://localhost/robots.txt']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    ports:
+      - ${HOST_PORT_BIND_PHP_MY_ADMIN:?See e2e-env/.env.dist}:80
+
+  mytun-config:
+    container_name: mytun-config
+    restart: 'no'
+    env_file: .env
+    extends:
+      file: myTun/docker-compose.yml
+      service: config-generator
+
+  mytun:
+    container_name: mytun
+    restart: always
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /config.yml run
+    depends_on:
+      mytun-config:
+        condition: service_completed_successfully
+    volumes:
+      - ./myTun/config/mytun-config.yml:/config.yml
+      - ./myTun/config/mytun-credentials.json:/credentials.json

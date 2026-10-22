@@ -1,0 +1,13 @@
+{
+  "name": "playwright-jedi",
+  "version": "1.0.0",
+  "description": "1. [Pre-requisites](#pre-requisites) 2. [Configure](#configure) 3. [Execute tests](#execute-tests) 4. [Test execution with UI](#test-execution-with-ui) 5. [Trace and Debug](#trace-and-debug)",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.10.5"
+  }
+}

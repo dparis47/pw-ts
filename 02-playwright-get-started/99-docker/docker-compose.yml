@@ -1,0 +1,13 @@
+---
+services:
+  playwright-test:
+    image: playwright-test
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    entrypoint: npm
+    command: run test
+    #copy reports and results on the host computer
+    volumes:
+      - ./playwright-report/:/app/playwright-report
+      - ./test-results/:/app/test-results
